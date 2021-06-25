@@ -7,7 +7,7 @@ import (
 )
 
 func server() {
-
+	fmt.Println("server")
 	addr, err := net.ResolveUDPAddr("udp", localhost.ToString())
 	if err != nil {
 		fmt.Println("resolve addr error", err)
@@ -24,10 +24,13 @@ func server() {
 			fmt.Println("listening error", err)
 			os.Exit(-1)
 		}
+		buf := make([]byte, 64)
 
-		fmt.Println(udpconn.RemoteAddr())
+		_, remoteaddr, err := udpconn.ReadFromUDP(buf)
+
+		fmt.Println(remoteaddr)
 		select {
-		case clients <- udpconn.RemoteAddr().String():
+		case clients <- remoteaddr.String():
 			fmt.Println("get client address success")
 		default:
 			SendRealAddr(clients)
