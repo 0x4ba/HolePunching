@@ -18,7 +18,7 @@ func (h *host) ToString() string {
 
 var (
 	s         = host{ipaddr: "116.63.143.23", port: "666"}
-	localhost = host{ipaddr: "127.0.0.1", port: "666"}
+	localhost = host{ipaddr: "", port: "666"}
 )
 
 func main() {

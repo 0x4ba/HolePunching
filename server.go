@@ -27,8 +27,12 @@ func server() {
 		buf := make([]byte, 64)
 
 		_, remoteaddr, err := udpconn.ReadFromUDP(buf)
-
+		if err != nil {
+			fmt.Println("read error", err)
+		}
+		fmt.Println(string(buf))
 		fmt.Println(remoteaddr)
+
 		select {
 		case clients <- remoteaddr.String():
 			fmt.Println("get client address success")
@@ -38,6 +42,10 @@ func server() {
 
 		udpconn.Close()
 
+		if len(clients) == 2 {
+			SendRealAddr(clients)
+		}
+
 	}
 
 }
@@ -46,6 +54,7 @@ func SendRealAddr(clients <-chan string) {
 	cli1 := <-clients
 	cli2 := <-clients
 
+	fmt.Println(cli1, cli2)
 	addr, err := net.ResolveUDPAddr("udp", cli1)
 	if err != nil {
 		fmt.Println("resolve addr error", err, cli1)
