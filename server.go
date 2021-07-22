@@ -66,7 +66,5 @@ func SendRealAddr(client <-chan string, conn *net.UDPConn, Raddr string) {
 		os.Exit(-1)
 	}
 	conn.WriteToUDP([]byte(cli), RUDPAddr)
-	conn.WriteToUDP([]byte(cli), RUDPAddr)
-	conn.WriteToUDP([]byte(cli), RUDPAddr)
 	wg.Done()
 }
