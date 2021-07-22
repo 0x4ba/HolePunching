@@ -65,6 +65,11 @@ func client() {
 		}
 	}(udpconn, dstUDPAddr)
 
+	go func(conn *net.UDPConn) {
+		for {
+			recvMsg(udpconn)
+		}
+	}(udpconn)
 }
 
 func recvMsg(conn *net.UDPConn) string {
