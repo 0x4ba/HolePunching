@@ -40,12 +40,10 @@ func client() {
 		if err != nil {
 			fmt.Println("client recv address error", err)
 		}
+		recvMsg(udpconn)
 	}
 
-	conn.Close()
-
 }
-
 
 func recvMsg(conn *net.UDPConn) {
 	buf := make([]byte, 512)

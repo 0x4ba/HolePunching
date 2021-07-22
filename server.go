@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sync"
 )
+
+var wg = sync.WaitGroup{}
 
 func server() {
 	fmt.Println("server")
@@ -15,82 +18,55 @@ func server() {
 	}
 
 	//var clients = map[string]string
-	clients := make(chan string, 2)
+	// var client1 chan string
+	// var client2 chan string
+	client1 := make(chan string, 1)
+	client2 := make(chan string, 1)
+
+	udpconn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		fmt.Println("listening error", err)
+		os.Exit(-1)
+	}
 
 	for {
-
-		udpconn, err := net.ListenUDP("udp", addr)
-		if err != nil {
-			fmt.Println("listening error", err)
-			os.Exit(-1)
-		}
+		wg.Add(2)
 		buf := make([]byte, 64)
-
-		_, remoteaddr, err := udpconn.ReadFromUDP(buf)
+		_, remoteaddr1, err := udpconn.ReadFromUDP(buf)
 		if err != nil {
 			fmt.Println("read error", err)
 		}
+		client2 <- remoteaddr1.String()
 		fmt.Println(string(buf))
-		fmt.Println(remoteaddr)
+		fmt.Println(remoteaddr1)
+		go SendRealAddr(client1, udpconn, remoteaddr1.String())
 
-		select {
-		case clients <- remoteaddr.String():
-			fmt.Println("get client address success")
-		default:
-			SendRealAddr(clients)
+		_, remoteaddr2, err := udpconn.ReadFromUDP(buf)
+		if err != nil {
+			fmt.Println("read error", err)
 		}
+		client1 <- remoteaddr2.String()
+		fmt.Println(string(buf))
+		fmt.Println(remoteaddr2)
 
-		udpconn.Close()
-
-		if len(clients) == 2 {
-			SendRealAddr(clients)
-		}
-
+		go SendRealAddr(client2, udpconn, remoteaddr2.String())
+		wg.Wait()
 	}
 
 }
 
-func SendRealAddr(clients <-chan string) {
-	cli1 := <-clients
-	cli2 := <-clients
+func SendRealAddr(client <-chan string, conn *net.UDPConn, Raddr string) {
+	//defer conn.Close()
+	cli := <-client
 
-	fmt.Println(cli1, cli2)
-	addr, err := net.ResolveUDPAddr("udp", cli1)
+	//fmt.Println(cli1, cli2)
+	RUDPAddr, err := net.ResolveUDPAddr("udp", Raddr)
 	if err != nil {
-		fmt.Println("resolve addr error", err, cli1)
+		fmt.Println("resolve addr error", err, Raddr)
 		os.Exit(-1)
 	}
-
-	conn, err := net.DialUDP("udp", nil, addr)
-	if err != nil {
-		fmt.Println("dialudp error", err, cli1)
-		os.Exit(-1)
-	}
-
-	SendMsgHandler(conn, cli2)
-
-	addr, err = net.ResolveUDPAddr("udp", cli2)
-	if err != nil {
-		fmt.Println("resolve addr error", err, cli2)
-		os.Exit(-1)
-	}
-
-	conn, err = net.DialUDP("udp", nil, addr)
-	if err != nil {
-		fmt.Println("dialudp error", err, cli2)
-		os.Exit(-1)
-	}
-
-	SendMsgHandler(conn, cli1)
-}
-
-func SendMsgHandler(conn *net.UDPConn, msg string) bool {
-	defer conn.Close()
-	_, err := conn.Write([]byte(msg))
-	if err != nil {
-		fmt.Println("Send msg error", err)
-		return false
-	}
-
-	return true
+	conn.WriteToUDP([]byte(cli), RUDPAddr)
+	conn.WriteToUDP([]byte(cli), RUDPAddr)
+	conn.WriteToUDP([]byte(cli), RUDPAddr)
+	wg.Done()
 }

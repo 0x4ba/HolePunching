@@ -1,6 +1,9 @@
 package main
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 // var (
 // 	host = "116.63.143.23"
@@ -32,4 +35,5 @@ func main() {
 			client()
 		}
 	}
+	fmt.Println("done")
 }
