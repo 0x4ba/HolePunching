@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 )
 
 // var (
@@ -24,6 +25,8 @@ var (
 	localhost = host{ipaddr: "", port: "666"}
 )
 
+var wg = sync.WaitGroup{}
+
 func main() {
 	args := os.Args[1:]
 
@@ -36,4 +39,5 @@ func main() {
 		}
 	}
 	fmt.Println("done")
+	wg.Wait()
 }

@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-var wg = sync.WaitGroup{}
+var serverWg = sync.WaitGroup{}
 
 func server() {
 	fmt.Println("server")
@@ -30,7 +30,7 @@ func server() {
 	}
 
 	for {
-		wg.Add(2)
+		serverWg.Add(2)
 		buf := make([]byte, 64)
 		_, remoteaddr1, err := udpconn.ReadFromUDP(buf)
 		if err != nil {
@@ -50,7 +50,7 @@ func server() {
 		fmt.Println(remoteaddr2)
 
 		go SendRealAddr(client2, udpconn, remoteaddr2.String())
-		wg.Wait()
+		serverWg.Wait()
 	}
 
 }
@@ -66,5 +66,5 @@ func SendRealAddr(client <-chan string, conn *net.UDPConn, Raddr string) {
 		os.Exit(-1)
 	}
 	conn.WriteToUDP([]byte(cli), RUDPAddr)
-	wg.Done()
+	serverWg.Done()
 }
