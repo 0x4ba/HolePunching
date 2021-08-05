@@ -35,49 +35,73 @@ func client() {
 		os.Exit(-1)
 	}
 	buf := make([]byte, 128)
-	var dstAddr string
 
-	for {
-		_, _, err = udpconn.ReadFromUDP(buf)
-		if err != nil {
-			fmt.Println("client recv address error", err)
-		}
-		dstAddr = recvMsg(udpconn)
-		if dstAddr != "" {
-			break
-		}
+	length, _, err := udpconn.ReadFromUDP(buf)
+	if err != nil {
+		fmt.Println("client recv address error", err)
 	}
 
+	dstAddr := string(buf)[0:length]
+	fmt.Println(dstAddr)
 	dstUDPAddr, err := net.ResolveUDPAddr("udp", dstAddr)
 	if err != nil {
 		fmt.Println("resolve addr error", err, dstAddr)
 		os.Exit(-1)
 	}
-	// conn, err = net.DialUDP("udp", nil, dstUDPAddr)
-	// if err != nil {
-	// 	fmt.Println("dialing error", err, dstAddr)
-	// }
-	go func(conn *net.UDPConn, dstUDPAddr *net.UDPAddr) {
-		reader := bufio.NewReader(os.Stdin)
-		for {
-			buf, _, _ := reader.ReadLine()
-			conn.WriteToUDP(buf, dstUDPAddr)
-		}
-	}(udpconn, dstUDPAddr)
+	udpconn.Close()
 
-	go func(conn *net.UDPConn) {
+	wg.Add(2)
+	var done = make(chan struct{})
+
+	udpconn, err = net.ListenUDP("udp", hostaddr)
+	if err != nil {
+		fmt.Println("listening error", err)
+		os.Exit(-1)
+	}
+
+	go func(conn *net.UDPConn, dstUDPAddr *net.UDPAddr, done chan struct{}) {
+
+		//udpconn, err := net.DialUDP("udp", nil, dstUDPAddr)
+		// udpconn, err := net.DialUDP("udp", nil, dstUDPAddr)
+		// if err != nil {
+		// 	fmt.Println("listening error", err)
+		// 	os.Exit(-1)
+		// }
+
+		i, err := conn.WriteToUDP([]byte("hello"), dstUDPAddr)
+		fmt.Println(i, err)
+		//done <- struct{}{}
+		consolescanner := bufio.NewScanner(os.Stdin)
+
 		for {
-			recvMsg(udpconn)
+			// by default, bufio.Scanner scans newline-separated lines
+			for consolescanner.Scan() {
+				input := consolescanner.Bytes()
+				if string(input) != "" {
+					i, err := conn.WriteToUDP(input, dstUDPAddr)
+
+					fmt.Println("ME:"+string(input[0:i]), "length:"+fmt.Sprint(len(input)), err)
+				}
+			}
+
 		}
-	}(udpconn)
+	}(udpconn, dstUDPAddr, done)
+
+	go recvMsg(udpconn, hostaddr, done)
 }
 
-func recvMsg(conn *net.UDPConn) string {
+func recvMsg(conn *net.UDPConn, hostaddr *net.UDPAddr, done chan struct{}) string {
+	//<-done
+
 	buf := make([]byte, 512)
-	_, _, err := conn.ReadFromUDP(buf)
-	if err != nil {
-		fmt.Println(err)
+	for {
+		len, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println(err)
+		}
+		if string(buf[0:len]) != "" {
+			fmt.Println(string(buf[0:len]))
+		}
+
 	}
-	fmt.Println(buf[:])
-	return string(buf)
 }
