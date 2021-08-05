@@ -6,11 +6,6 @@ import (
 	"sync"
 )
 
-// var (
-// 	host = "116.63.143.23"
-// 	port = "666"
-// )
-
 type host struct {
 	ipaddr string
 	port   string
@@ -21,7 +16,7 @@ func (h *host) ToString() string {
 }
 
 var (
-	s         = host{ipaddr: "116.63.143.23", port: "666"}
+	s         = host{ipaddr: "xxx.xxx.xxx.xxx", port: "666"}
 	localhost = host{ipaddr: "", port: "666"}
 )
 

@@ -51,7 +51,6 @@ func client() {
 	udpconn.Close()
 
 	wg.Add(2)
-	var done = make(chan struct{})
 
 	udpconn, err = net.ListenUDP("udp", hostaddr)
 	if err != nil {
@@ -59,18 +58,10 @@ func client() {
 		os.Exit(-1)
 	}
 
-	go func(conn *net.UDPConn, dstUDPAddr *net.UDPAddr, done chan struct{}) {
-
-		//udpconn, err := net.DialUDP("udp", nil, dstUDPAddr)
-		// udpconn, err := net.DialUDP("udp", nil, dstUDPAddr)
-		// if err != nil {
-		// 	fmt.Println("listening error", err)
-		// 	os.Exit(-1)
-		// }
+	go func(conn *net.UDPConn, dstUDPAddr *net.UDPAddr) {
 
 		i, err := conn.WriteToUDP([]byte("hello"), dstUDPAddr)
 		fmt.Println(i, err)
-		//done <- struct{}{}
 		consolescanner := bufio.NewScanner(os.Stdin)
 
 		for {
@@ -85,13 +76,12 @@ func client() {
 			}
 
 		}
-	}(udpconn, dstUDPAddr, done)
+	}(udpconn, dstUDPAddr)
 
-	go recvMsg(udpconn, hostaddr, done)
+	go recvMsg(udpconn, hostaddr)
 }
 
-func recvMsg(conn *net.UDPConn, hostaddr *net.UDPAddr, done chan struct{}) string {
-	//<-done
+func recvMsg(conn *net.UDPConn, hostaddr *net.UDPAddr) string {
 
 	buf := make([]byte, 512)
 	for {
