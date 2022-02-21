@@ -2,7 +2,8 @@
 udp HolePunching
 
 ## usage
-  `main.go
+  main.go
+  `
   var (
     s         = host{ipaddr: "xxx.xxx.xxx.xxx", port: "666"}
     localhost = host{ipaddr: "", port: "666"}
